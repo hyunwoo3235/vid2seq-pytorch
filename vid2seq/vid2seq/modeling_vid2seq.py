@@ -42,7 +42,6 @@ class Vid2SeqPositionalEmbedding(nn.Module):
         self.max_len = max_len
 
         self.pe = nn.Embedding(self.max_len, self.dim)
-        self.pe.weight.data.normal_(mean=0.0, std=1.0)
 
     def forward(self, hidden_states):
         batch_size, seq_len = hidden_states.shape[:2]
@@ -550,7 +549,9 @@ class Vid2SeqPreTrainedModel(PreTrainedModel):
         factor = self.config.initializer_factor
         if isinstance(module, Vid2SeqLayerNorm):
             module.weight.data.fill_(factor * 1.0)
-        elif isinstance(module, Vid2SeqModel):
+        if isinstance(module, Vid2SeqPositionalEmbedding):
+            module.pe.weight.data.normal_(mean=0.0, std=factor * 0.02)
+        elif isinstance(module, (Vid2SeqModel, Vid2SeqForConditionalGeneration)):
             module.shared.weight.data.normal_(mean=0.0, std=factor * 1.0)
             if hasattr(module, "lm_head") and not self.config.tie_word_embeddings:
                 module.lm_head.weight.data.normal_(mean=0.0, std=factor * 1.0)
